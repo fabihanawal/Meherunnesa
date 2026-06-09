@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "plot": {
+      "title": "Plot",
+      "description": "Represents a physical plot in Meherunnesa Society",
+      "type": "object",
+      "properties": {
+        "plotNumber": { "type": "string", "description": "The plot identification number, e.g. A-1" },
+        "sizeKatha": { "type": "number", "description": "Size of the plot in Katha units" },
+        "pricePerKatha": { "type": "number", "description": "Price per Katha in Bangladeshi Taka" },
+        "totalPrice": { "type": "number", "description": "Total price of the plot in Bangladeshi Taka" },
+        "status": { "type": "string", "enum": ["available", "booked", "sold"], "description": "Availability status of the plot" },
+        "facing": { "type": "string", "description": "Under what direction the plot faces, e.g. South, North-East" },
+        "roadWidth": { "type": "string", "description": "Road width adjacent to the plot, e.g. 20ft main road" },
+        "block": { "type": "string", "description": "The sector or block of the plot" },
+        "notes": { "type": "string", "description": "Additional text details about the plot" }
+      },
+      "required": ["plotNumber", "sizeKatha", "pricePerKatha", "totalPrice", "status", "facing"]
+    },
+    "booking": {
+      "title": "Booking Request",
+      "description": "Represents a customer's inquiry or booking request for a plot",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string", "description": "Full name of the prospect" },
+        "customerPhone": { "type": "string", "description": "Contact number (phone)" },
+        "customerEmail": { "type": "string", "description": "Contact email address" },
+        "plotId": { "type": "string", "description": "Associated plot number or identifier" },
+        "message": { "type": "string", "description": "Custom query details or requests" },
+        "status": { "type": "string", "enum": ["pending", "contacted", "completed"], "description": "Inquiry response status" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["customerName", "customerPhone", "status", "createdAt"]
+    },
+    "setting": {
+      "title": "Setting",
+      "description": "Represents any page settings, contact numbers, or metadata",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["key", "value"]
+    }
+  },
+  "firestore": {
+    "plots": {
+      "schema": "plot",
+      "description": "A collection containing land plots and their availability info"
+    },
+    "bookings": {
+      "schema": "booking",
+      "description": "User requests for callbacks, plot bookings, and questions"
+    },
+    "settings": {
+      "schema": "setting",
+      "description": "Key-value settings stored dynamically in Firestore"
+    }
+  }
+}

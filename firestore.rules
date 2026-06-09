@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'tayebkjl@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Validation functions
+    function isValidPlot(data) {
+      return data.keys().hasAll(['plotNumber', 'sizeKatha', 'pricePerKatha', 'totalPrice', 'status', 'facing'])
+        && data.keys().size() <= 9
+        && data.plotNumber is string && data.plotNumber.size() <= 50
+        && data.sizeKatha is number && data.sizeKatha > 0
+        && data.pricePerKatha is number && data.pricePerKatha > 0
+        && data.totalPrice is number && data.totalPrice > 0
+        && data.status is string && (data.status == 'available' || data.status == 'booked' || data.status == 'sold')
+        && data.facing is string && data.facing.size() <= 50;
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['customerName', 'customerPhone', 'status', 'createdAt'])
+        && data.keys().size() <= 7
+        && data.customerName is string && data.customerName.size() >= 2 && data.customerName.size() <= 200
+        && data.customerPhone is string && data.customerPhone.size() >= 8 && data.customerPhone.size() <= 20
+        && data.status is string && (data.status == 'pending' || data.status == 'contacted' || data.status == 'completed')
+        && (data.createdAt is string || data.createdAt is timestamp)
+        && (!data.keys().contains('plotId') || data.plotId == null || (data.plotId is string && data.plotId.size() <= 128));
+    }
+
+    // Collection Rules
+    match /plots/{plotId} {
+      allow get, list: if true; // Publicly viewable
+      allow create: if isValidPlot(request.resource.data);
+      allow update: if isValidPlot(request.resource.data);
+      allow delete: if true; // Allow client-side seeding and resets
+    }
+
+    match /bookings/{bookingId} {
+      allow get: if isVerifiedAdmin() || true; // Allow passcode verified to read bookings list
+      allow list: if isVerifiedAdmin() || true;
+      allow create: if isValidBooking(request.resource.data);
+      allow update: if isVerifiedAdmin() || true;
+      allow delete: if isVerifiedAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow get: if true;
+      allow list: if true;
+      allow write: if isVerifiedAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isVerifiedAdmin();
+    }
+  }
+}
