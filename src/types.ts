@@ -9,6 +9,7 @@ export interface Plot {
   roadWidth: string; // e.g. "20 feet main road", "10 feet internal"
   block: string; // e.g. "Block A", "Block B"
   notes?: string;
+  image?: string; // Optional custom plot picture/schematic uploaded by Admin
 }
 
 export interface BookingRequest {

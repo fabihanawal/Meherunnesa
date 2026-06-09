@@ -9,6 +9,7 @@ interface HeroProps {
   onScrollToCalculator: () => void;
   customTitle?: string;
   customSubtitle?: string;
+  heroImage?: string;
 }
 
 export default function Hero({
@@ -18,7 +19,8 @@ export default function Hero({
   onScrollToPlots,
   onScrollToCalculator,
   customTitle,
-  customSubtitle
+  customSubtitle,
+  heroImage
 }: HeroProps) {
   return (
     <div id="home" className="relative bg-slate-900 border-b border-slate-800 text-white overflow-hidden">
@@ -143,7 +145,7 @@ export default function Hero({
           >
             <div className="relative rounded-2xl overflow-hidden border border-slate-700 shadow-2xl shadow-emerald-950/20 group">
               <img
-                src="/src/assets/images/meherunnesa_hero_1780851448884.png"
+                src={heroImage || "/src/assets/images/meherunnesa_hero_1780851448884.png"}
                 alt="Meherunnesa Society Premium Layout"
                 className="w-full h-[320px] sm:h-[400px] object-cover transition-transform duration-700 group-hover:scale-105"
                 referrerPolicy="no-referrer"

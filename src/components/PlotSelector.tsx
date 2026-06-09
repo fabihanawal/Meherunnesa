@@ -7,9 +7,10 @@ interface PlotSelectorProps {
   plots: Plot[];
   onSelectPlot: (plot: Plot) => void;
   selectedPlot: Plot | null;
+  layoutMapUrl?: string;
 }
 
-export default function PlotSelector({ plots, onSelectPlot, selectedPlot }: PlotSelectorProps) {
+export default function PlotSelector({ plots, onSelectPlot, selectedPlot, layoutMapUrl }: PlotSelectorProps) {
   const [viewMode, setViewMode] = useState<'interactive' | 'map'>('interactive');
   const [filter, setFilter] = useState<'all' | 'available' | 'booked' | 'sold'>('all');
 
@@ -224,6 +225,17 @@ export default function PlotSelector({ plots, onSelectPlot, selectedPlot }: Plot
                         </span>
                       </div>
 
+                      {selectedPlot.image && (
+                        <div className="mb-5 rounded-xl overflow-hidden border border-slate-800 bg-slate-950/50 aspect-video relative max-h-[220px]">
+                          <img 
+                            src={selectedPlot.image} 
+                            alt={`Plot ${selectedPlot.plotNumber} schematic`} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer" 
+                          />
+                        </div>
+                      )}
+
                       {/* Info grid details */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800">
@@ -330,7 +342,7 @@ export default function PlotSelector({ plots, onSelectPlot, selectedPlot }: Plot
 
             <div className="relative overflow-hidden rounded-xl border border-slate-300 bg-white shadow-inner max-w-2xl mx-auto">
               <img
-                src="/src/assets/images/meherunnesa_layout_1780851468838.png"
+                src={layoutMapUrl || "/src/assets/images/meherunnesa_layout_1780851468838.png"}
                 alt="Meherunnesa Layout Blueprint"
                 className="w-full h-auto object-contain p-2 max-h-[460px] mx-auto rounded-lg"
               />

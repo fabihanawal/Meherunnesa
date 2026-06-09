@@ -40,6 +40,8 @@ interface AppConfig {
   headerSubtitle?: string;
   heroTitle?: string;
   heroSubtitle?: string;
+  heroImageUrl?: string;
+  layoutMapUrl?: string;
 }
 
 const toBengaliNumber = (num: number | string): string => {
@@ -75,7 +77,9 @@ export default function App() {
     locationUrl: 'https://maps.app.goo.gl/u3hJZ22mPjjMf8Me6',
     headerSubtitle: 'প্রজেক্ট ২ | নওগাঁ',
     heroTitle: '',
-    heroSubtitle: ''
+    heroSubtitle: '',
+    heroImageUrl: '/src/assets/images/meherunnesa_hero_1780851448884.png',
+    layoutMapUrl: '/src/assets/images/meherunnesa_layout_1780851468838.png'
   });
 
   // Sync Global Settings
@@ -94,7 +98,9 @@ export default function App() {
           locationUrl: data.locationUrl || 'https://maps.app.goo.gl/u3hJZ22mPjjMf8Me6',
           headerSubtitle: data.headerSubtitle || 'প্রজেক্ট ২ | নওগাঁ',
           heroTitle: data.heroTitle || '',
-          heroSubtitle: data.heroSubtitle || ''
+          heroSubtitle: data.heroSubtitle || '',
+          heroImageUrl: data.heroImageUrl || data.heroImage || '/src/assets/images/meherunnesa_hero_1780851448884.png',
+          layoutMapUrl: data.layoutMapUrl || '/src/assets/images/meherunnesa_layout_1780851468838.png'
         });
       }
     });
@@ -309,6 +315,9 @@ export default function App() {
         onScrollToCalculator={() => {
           document.getElementById('calculator-section')?.scrollIntoView({ behavior: 'smooth' });
         }}
+        customTitle={config.heroTitle}
+        customSubtitle={config.heroSubtitle}
+        heroImage={config.heroImageUrl}
       />
 
       {/* 3. Value Proposition / why buy section */}
@@ -370,6 +379,7 @@ export default function App() {
         plots={plots} 
         selectedPlot={selectedPlot} 
         onSelectPlot={(p) => setSelectedPlot(p)} 
+        layoutMapUrl={config.layoutMapUrl}
       />
 
       {/* 5. Complete Detailed dynamic Pricing breakdown Table */}

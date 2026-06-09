@@ -69,6 +69,7 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
   const [newPlotFacing, setNewPlotFacing] = useState('দক্ষিণমুখী (South-Facing)');
   const [newPlotRoad, setNewPlotRoad] = useState('১০ ফুট সংযোগ রাস্তা');
   const [newPlotNotes, setNewPlotNotes] = useState('');
+  const [newPlotImage, setNewPlotImage] = useState('');
 
   // Slideshow State
   const [slides, setSlides] = useState<any[]>([]);
@@ -93,6 +94,30 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
   const [headerSubtitle, setHeaderSubtitle] = useState('প্রজেক্ট ২ | নওগাঁ');
   const [heroTitle, setHeroTitle] = useState('নওগাঁ শহরে নিজের একটি নিষ্কণ্টক জমা জমি ও স্থায়ী আবাসনের স্বপ্ন পূরণ করুন');
   const [heroSubtitle, setHeroSubtitle] = useState('দুর্গাপুর টু দয়ালের মোড় পিচ ঢালাই মেইন রোড সংলগ্ন সম্পূর্ণ উচু লাল কাদা মাটি দ্বারা নতুন ভরাটকৃত নিষ্কণ্টক প্লট আজই বুকিং করুন।');
+  const [heroImageUrl, setHeroImageUrl] = useState('/src/assets/images/meherunnesa_hero_1780851448884.png');
+  const [layoutMapUrl, setLayoutMapUrl] = useState('/src/assets/images/meherunnesa_layout_1780851468838.png');
+
+  // Generic Base64 image loader
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>, onLoaded: (base64: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1.2 * 1024 * 1024) {
+      alert("ফাইলের সাইজ অনেক বড় (১.২ এমবি এর চেয়ে বড়)! দয়া করে ছোট ছবি বা কম্প্রেস করা ছবি আপলোড করুন।");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        onLoaded(reader.result);
+      }
+    };
+    reader.onerror = (err) => {
+      console.warn("Error reading image file", err);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Load and restore admin login state from localStorage
   useEffect(() => {
@@ -163,11 +188,13 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
           setInstallmentPeriod(data.installmentPeriod || '১২ থেকে ২৪ মাস');
           setSiteTitle(data.title || 'মেহেরুন্নেসা সোসাইটি');
           setPhone(data.phone || '01535491716');
-          setLocationAddress(data.locationAddress || 'দক্ষিণ চকমোক্তার...');
+          setLocationAddress(data.locationAddress || 'দক্ষিণ চকমোক্তার, এনামুলের মোড়, দুর্গাপুর টু দয়ালের মোড় রোড, নওগাঁ সদর, নওগাঁ।');
           setLocationUrl(data.locationUrl || '');
           setHeaderSubtitle(data.headerSubtitle || '');
           setHeroTitle(data.heroTitle || '');
           setHeroSubtitle(data.heroSubtitle || '');
+          setHeroImageUrl(data.heroImageUrl || data.heroImage || '/src/assets/images/meherunnesa_hero_1780851448884.png');
+          setLayoutMapUrl(data.layoutMapUrl || '/src/assets/images/meherunnesa_layout_1780851468838.png');
         }
       });
       return () => unsubscribe();
@@ -233,7 +260,8 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
         status: editingPlot.status,
         facing: editingPlot.facing,
         roadWidth: editingPlot.roadWidth,
-        notes: editingPlot.notes || ''
+        notes: editingPlot.notes || '',
+        image: editingPlot.image || ''
       });
       setStatusMessage(`প্লট ${editingPlot.plotNumber} এর যাবতীয় তথ্য আপডেট করা হয়েছে!`);
       setEditingPlot(null);
@@ -260,11 +288,13 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
         facing: newPlotFacing,
         roadWidth: newPlotRoad,
         block: "নতুন ব্লক",
-        notes: newPlotNotes.trim() || ""
+        notes: newPlotNotes.trim() || "",
+        image: newPlotImage || ""
       });
       setStatusMessage(`নতুন প্লট ${newPlotNum} ডাটাবেজে যুক্ত করা হয়েছে!`);
       setIsAddingPlot(false);
       setNewPlotNum('');
+      setNewPlotImage('');
       onRefreshPlots();
     } catch (err) {
       setStatusMessage('নতুন প্লট যুক্ত করার অনুমতি নেই!');
@@ -349,7 +379,9 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
         locationUrl,
         headerSubtitle,
         heroTitle,
-        heroSubtitle
+        heroSubtitle,
+        heroImageUrl,
+        layoutMapUrl
       });
       setStatusMessage('সাইটের থিম ও তথ্য সমূহ সফলভাবে ক্লাউডে সেভ করা হয়েছে!');
     } catch (err) {
@@ -653,6 +685,36 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
                           <label className="block text-slate-600 text-[10px] font-bold uppercase mb-1">প্লট সম্পর্কে নোট</label>
                           <input type="text" placeholder="অনান্য বিস্তারিত..." className="w-full bg-white border border-slate-300 px-3 py-2 rounded-lg text-xs" value={newPlotNotes} onChange={(e) => setNewPlotNotes(e.target.value)} />
                         </div>
+                        <div className="sm:col-span-3 border-t pt-3 mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-slate-600 text-[10px] font-bold uppercase mb-1">প্লট ছবি/নকশা আপলোড (Upload Sketch/Photo)</label>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="w-full bg-white border border-slate-300 px-3 py-1.5 rounded-lg text-xs cursor-pointer" 
+                              onChange={(e) => handleImageFileChange(e, (base64) => setNewPlotImage(base64))} 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-600 text-[10px] font-bold uppercase mb-1">অথবা ছবি লিংক (Or Image URL)</label>
+                            <input 
+                              type="text" 
+                              placeholder="https://example.com/image.png" 
+                              className="w-full bg-white border border-slate-300 px-3 py-2 rounded-lg text-xs font-mono" 
+                              value={newPlotImage} 
+                              onChange={(e) => setNewPlotImage(e.target.value)} 
+                            />
+                          </div>
+                          {newPlotImage && (
+                            <div className="sm:col-span-2 flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200">
+                              <img src={newPlotImage} className="h-14 w-24 object-cover rounded-lg border bg-slate-900" alt="Preview" referrerPolicy="no-referrer" />
+                              <div className="text-left text-[10px] text-slate-500">
+                                <p className="font-bold text-slate-700">ছবি সংযোজন সম্পন্ন হয়েছে ✅</p>
+                                <button type="button" onClick={() => setNewPlotImage('')} className="text-rose-600 hover:underline font-bold">ছবি মুছুন</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         <div className="sm:col-span-3 text-right">
                           <button type="submit" className="px-5 py-2 bg-emerald-500 hover:bg-emerald-450 text-slate-900 rounded-lg text-xs font-bold cursor-pointer">সংরক্ষণ করুন</button>
                         </div>
@@ -728,9 +790,33 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
                           <h4 className="font-bold text-slate-800 text-xs">নতুন স্লাইড যুক্ত করার ফর্ম</h4>
                           <button type="button" onClick={() => setIsAddingSlide(false)} className="text-slate-400 hover:text-rose-600"><X className="w-4 h-4" /></button>
                         </div>
-                        <div className="sm:col-span-2">
-                          <label className="block text-slate-600 text-[10px] font-bold uppercase mb-1">ছবি ইউআরএল (Image Path/URL)</label>
-                          <input required type="text" placeholder="/src/assets/images/..." className="w-full bg-white border border-slate-300 px-3 py-2 rounded-lg text-xs" value={newSlideImage} onChange={(e) => setNewSlideImage(e.target.value)} />
+                        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-100 p-2.5 rounded-xl border border-slate-200">
+                          <div>
+                            <label className="block text-slate-650 text-[10px] font-bold uppercase mb-1">স্লাইড ছবি আপলোড (Upload Slide Image)</label>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="w-full bg-white border border-slate-300 px-2 py-1 rounded text-[11px] cursor-pointer" 
+                              onChange={(e) => handleImageFileChange(e, (base64) => setNewSlideImage(base64))} 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-slate-650 text-[10px] font-bold uppercase mb-1">অথবা ছবি লিংক (Or Image URL)</label>
+                            <input 
+                              type="text" 
+                              placeholder="https://example.com/slide.png" 
+                              className="w-full bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] font-mono" 
+                              value={newSlideImage} 
+                              onChange={(e) => setNewSlideImage(e.target.value)} 
+                            />
+                          </div>
+                          {newSlideImage && (
+                            <div className="sm:col-span-2 flex items-center gap-2 mt-1 bg-white p-1.5 rounded border">
+                              <img src={newSlideImage} className="h-10 w-16 object-cover rounded border bg-slate-900" alt="Preview" referrerPolicy="no-referrer" />
+                              <span className="text-[10px] text-slate-500 mr-auto">ছবি সিলেক্ট করা হয়েছে</span>
+                              <button type="button" onClick={() => setNewSlideImage('')} className="text-rose-600 text-[10px] hover:underline font-bold">ছবি মুছুন</button>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <label className="block text-slate-600 text-[10px] font-bold uppercase mb-1">অগ্রাধিকার সূচক (Order)</label>
@@ -866,6 +952,57 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
                           <label className="block text-[10px] font-bold text-slate-650 uppercase mb-1">অফিস যাতায়াত এবং সম্পূর্ণ লোকাল ঠিকানা (Address details)</label>
                           <textarea rows={2} className="w-full bg-white border border-slate-300 px-3 py-2 rounded-lg text-xs leading-relaxed" value={locationAddress} onChange={(e) => setLocationAddress(e.target.value)} />
                         </div>
+
+                        <div className="border-t pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                            <label className="block text-[10px] font-bold text-slate-700 uppercase">হিরো ব্যাকগ্রাউন্ড ছবি আপলোড (Upload Hero Image)</label>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="w-full bg-slate-50 border border-slate-305 px-2 py-1 rounded text-[11px] cursor-pointer" 
+                              onChange={(e) => handleImageFileChange(e, (base64) => setHeroImageUrl(base64))} 
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="অথবা সরাসরি হিরো ছবির লিংক" 
+                              className="w-full bg-slate-50 border border-slate-300 px-2 py-1 rounded text-[11px] font-mono" 
+                              value={heroImageUrl} 
+                              onChange={(e) => setHeroImageUrl(e.target.value)} 
+                            />
+                            {heroImageUrl && (
+                              <div className="flex items-center gap-2 mt-1 bg-slate-50 p-1.5 rounded border">
+                                <img src={heroImageUrl} className="h-10 w-16 object-cover rounded border bg-slate-900" alt="Hero Preview" referrerPolicy="no-referrer" />
+                                <span className="text-[10px] text-slate-500 mr-auto font-sans">ছবি সংযোজিত</span>
+                                <button type="button" onClick={() => setHeroImageUrl('/src/assets/images/meherunnesa_hero_1780851448884.png')} className="text-rose-600 text-[10px] hover:underline font-bold">ডিফল্ট করুন</button>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2">
+                            <label className="block text-[10px] font-bold text-slate-700 uppercase">লেআউট প্ল্যান ম্যাপ ছবি আপলোড (Upload Layout Map)</label>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="w-full bg-slate-50 border border-slate-305 px-2 py-1 rounded text-[11px] cursor-pointer" 
+                              onChange={(e) => handleImageFileChange(e, (base64) => setLayoutMapUrl(base64))} 
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="অথবা সরাসরি লেআউট ছবির লিংক" 
+                              className="w-full bg-slate-50 border border-slate-300 px-2 py-1 rounded text-[11px] font-mono" 
+                              value={layoutMapUrl} 
+                              onChange={(e) => setLayoutMapUrl(e.target.value)} 
+                            />
+                            {layoutMapUrl && (
+                              <div className="flex items-center gap-2 mt-1 bg-slate-50 p-1.5 rounded border">
+                                <img src={layoutMapUrl} className="h-10 w-16 object-cover rounded border bg-slate-900" alt="Map Preview" referrerPolicy="no-referrer" />
+                                <span className="text-[10px] text-slate-500 mr-auto font-sans">ছবি সংযোজিত</span>
+                                <button type="button" onClick={() => setLayoutMapUrl('/src/assets/images/meherunnesa_layout_1780851468838.png')} className="text-rose-600 text-[10px] hover:underline font-bold">ডিফল্ট করুন</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                       </div>
                     </div>
 
@@ -970,6 +1107,29 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
                 />
               </div>
 
+              <div className="bg-slate-55 p-2.5 rounded-xl border border-slate-200 space-y-2">
+                <label className="block text-[10px] font-bold text-slate-650 uppercase mb-0.5">প্লট চিত্র/ম্যাপ পরিবর্তন (Plot photo/schematics)</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="w-full bg-white border border-slate-300 px-2 py-1 rounded text-[11px] cursor-pointer" 
+                  onChange={(e) => handleImageFileChange(e, (base64) => setEditingPlot({ ...editingPlot, image: base64 }))} 
+                />
+                <input 
+                  type="text" 
+                  placeholder="অথবা সরাসরি ছবির ইউআরএল লিংক" 
+                  className="w-full bg-white border border-slate-300 px-2 py-1 rounded text-[11px] font-mono" 
+                  value={editingPlot.image || ''} 
+                  onChange={(e) => setEditingPlot({ ...editingPlot, image: e.target.value })} 
+                />
+                {editingPlot.image && (
+                  <div className="flex items-center gap-2 mt-1 bg-white p-1.5 rounded border">
+                    <img src={editingPlot.image} className="h-10 w-16 object-cover rounded border bg-slate-900" alt="Preview" referrerPolicy="no-referrer" />
+                    <button type="button" onClick={() => setEditingPlot({ ...editingPlot, image: '' })} className="text-rose-600 text-[10px] hover:underline font-bold">ছবি মুছুন</button>
+                  </div>
+                )}
+              </div>
+
               <div className="pt-4 border-t flex justify-end gap-3 text-xs">
                 <button
                   type="button"
@@ -1006,15 +1166,28 @@ export default function AdminPanel({ plots, onRefreshPlots, isAdminMode, setIsAd
             </div>
 
             <form onSubmit={handleUpdateSlide} className="space-y-4 text-xs font-medium text-slate-700">
-              <div>
-                <label className="block mb-1 font-bold">ছবি ইউআরএল (Image URL)</label>
-                <input
-                  required
-                  type="text"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2"
-                  value={editingSlide.image}
-                  onChange={(e) => setEditingSlide({ ...editingSlide, image: e.target.value })}
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-2">
+                <label className="block text-[10px] font-bold text-slate-650 uppercase mb-0.5">স্লাইড ছবি পরিবর্তন/আপলোড (Upload Slide Photo)</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="w-full bg-white border border-slate-300 px-2 py-1 rounded text-[11px] cursor-pointer" 
+                  onChange={(e) => handleImageFileChange(e, (base64) => setEditingSlide({ ...editingSlide, image: base64 }))} 
                 />
+                <input 
+                  type="text" 
+                  placeholder="অথবা সরাসরি ছবির ইউআরএল" 
+                  required
+                  className="w-full bg-white border border-slate-300 px-2 py-1 rounded text-[11px] font-mono" 
+                  value={editingSlide.image || ''} 
+                  onChange={(e) => setEditingSlide({ ...editingSlide, image: e.target.value })} 
+                />
+                {editingSlide.image && (
+                  <div className="flex items-center gap-2 mt-1 bg-white p-1.5 rounded border">
+                    <img src={editingSlide.image} className="h-10 w-16 object-cover rounded border bg-slate-900" alt="Preview" referrerPolicy="no-referrer" />
+                    <button type="button" onClick={() => setEditingSlide({ ...editingSlide, image: '' })} className="text-rose-600 text-[10px] hover:underline font-bold">ছবি মুছুন</button>
+                  </div>
+                )}
               </div>
 
               <div>
