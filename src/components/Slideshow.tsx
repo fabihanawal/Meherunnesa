@@ -15,61 +15,111 @@ import {
   Eye,
   Info
 } from 'lucide-react';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface Slide {
-  id: number;
+  id: string | number;
   image: string;
   title: string;
   subTitle: string;
   description: string;
   badge: string;
-  icon: React.ReactNode;
+  iconName?: string;
+  icon?: React.ReactNode;
 }
+
+const STATIC_SLIDES: Slide[] = [
+  {
+    id: 1,
+    image: '/src/assets/images/meherunnesa_gate_1780852437783.png',
+    badge: 'প্রধান প্রবেশদ্বার',
+    title: 'মেহেরুন্নেসা সোসাইটি মেইন গেট',
+    subTitle: 'সুদৃশ্য ও সুপরিকল্পিত প্রবেশদ্বার',
+    description: 'প্রজেক্টের মূল গেট এবং তার সাথে সংযুক্ত ২০ ফুট প্রশস্ত পিচ ঢালাই সংযোগ সড়ক যা সরাসরি দুর্গাপুর টু দয়ালের মোড় রোডের সাথে যুক্ত। নিরাপত্তা ও স্বকীয়তায় মোড়ানো আধুনিক আবাসন পরিবেশ।',
+    iconName: 'Compass',
+    icon: <Compass className="w-5 h-5 text-emerald-400" />
+  },
+  {
+    id: 2,
+    image: '/src/assets/images/meherunnesa_villa_1780852454160.png',
+    badge: 'ভবিষ্যৎ আবাসন পরিকল্পনা',
+    title: 'আপনার স্বপ্নের আধুনিক ভিলা বা অট্টালিকা',
+    subTitle: '৩ থেকে ৫ কাঠা জমিতে দৃষ্টিনন্দন নকশা',
+    description: 'মেহেরুন্নেসা সোসাইটির লাল কাদা মাটির উঁচু ভরাট প্লটগুলোতে ২, ৩ বা ৫ কাঠার সুনিপুণ বিন্যাসে আপনার শখের বহুতল ভবন বা নান্দনিক কান্ট্রি ভিলা গড়ার এখনই মোক্ষম সুযোগ।',
+    iconName: 'Home',
+    icon: <Home className="w-5 h-5 text-teal-400" />
+  },
+  {
+    id: 3,
+    image: '/src/assets/images/meherunnesa_layout_1780851468838.png',
+    badge: 'মাস্টারপ্ল্যান নকশা',
+    title: 'পরিকল্পিত সোসাইটি লেআউট ও প্লট বিন্যাস',
+    subTitle: 'সঠিক পরিমাপ ও নিষ্কণ্টক সীমানা',
+    description: 'সম্পূর্ণ প্রজেক্টের ভৌত বিন্যাস এবং সড়ক বিন্যাসের নিখুঁত নকশাচিত্র। প্রতিটি প্লটের মুখোমুখি ১০ ফুট অভ্যন্তরীণ চওড়া রাস্তা বিদ্যমান, যা অত্যন্ত সুশৃঙ্খলভাবে সাজানো হয়েছে।',
+    iconName: 'Map',
+    icon: <Map className="w-5 h-5 text-emerald-400" />
+  },
+  {
+    id: 4,
+    image: '/src/assets/images/meherunnesa_hero_1780851448884.png',
+    badge: 'প্রাকৃতিক ও মনোরম পরিবেশ',
+    title: 'শান্ত, সবুজ ও উন্নত নাগরিক পরিবেশ',
+    subTitle: 'ইতোমধ্যেই পরিবার নিয়ে নাগরিক জীবন যাপন',
+    description: 'দক্ষিণ চকমোক্তারের কোলাহলমুক্ত স্বাস্থ্যকর পরিবেশ এবং প্রজেক্ট সংলগ্ন এলাকায় গড়ে ওঠা আবাসিক ঘরবাড়ি। পানি ও বিদ্যুৎ লাইনের তাত্ক্ষণিক সুবিধা সহ আজই বসবাস উপযোগী।',
+    iconName: 'Sparkles',
+    icon: <Sparkles className="w-5 h-5 text-amber-400" />
+  }
+];
+
+const getIcon = (iconName?: string) => {
+  switch (iconName) {
+    case 'Compass': return <Compass className="w-5 h-5 text-emerald-400" />;
+    case 'Home': return <Home className="w-5 h-5 text-teal-400" />;
+    case 'Map': return <Map className="w-5 h-5 text-emerald-400" />;
+    case 'Sparkles': return <Sparkles className="w-5 h-5 text-amber-400" />;
+    default: return <Compass className="w-5 h-5 text-emerald-400" />;
+  }
+};
 
 export default function Slideshow() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [slides, setSlides] = useState<Slide[]>(STATIC_SLIDES);
+  
   const autoPlayTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const SLIDES: Slide[] = [
-    {
-      id: 1,
-      image: '/src/assets/images/meherunnesa_gate_1780852437783.png',
-      badge: 'প্রধান প্রবেশদ্বার',
-      title: 'মেহেরুন্নেসা সোসাইটি মেইন গেট',
-      subTitle: 'সুদৃশ্য ও সুপরিকল্পিত প্রবেশদ্বার',
-      description: 'প্রজেক্টের মূল গেট এবং তার সাথে সংযুক্ত ২০ ফুট প্রশস্ত পিচ ঢালাই সংযোগ সড়ক যা সরাসরি দুর্গাপুর টু দয়ালের মোড় রোডের সাথে যুক্ত। নিরাপত্তা ও স্বকীয়তায় মোড়ানো আধুনিক আবাসন পরিবেশ।',
-      icon: <Compass className="w-5 h-5 text-emerald-400" />
-    },
-    {
-      id: 2,
-      image: '/src/assets/images/meherunnesa_villa_1780852454160.png',
-      badge: 'ভবিষ্যৎ আবাসন পরিকল্পনা',
-      title: 'আপনার স্বপ্নের আধুনিক ভিলা বা অট্টালিকা',
-      subTitle: '৩ থেকে ৫ কাঠা জমিতে দৃষ্টিনন্দন নকশা',
-      description: 'মেহেরুন্নেসা সোসাইটির লাল কাদা মাটির উঁচু ভরাট প্লটগুলোতে ২, ৩ বা ৫ কাঠার সুনিপুণ বিন্যাসে আপনার শখের বহুতল ভবন বা নান্দনিক কান্ট্রি ভিলা গড়ার এখনই মোক্ষম সুযোগ।',
-      icon: <Home className="w-5 h-5 text-teal-400" />
-    },
-    {
-      id: 3,
-      image: '/src/assets/images/meherunnesa_layout_1780851468838.png',
-      badge: 'মাস্টারপ্ল্যান নকশা',
-      title: 'পরিকল্পিত সোসাইটি লেআউট ও প্লট বিন্যাস',
-      subTitle: 'সঠিক পরিমাপ ও নিষ্কণ্টক সীমানা',
-      description: 'সম্পূর্ণ প্রজেক্টের ভৌত বিন্যাস এবং সড়ক বিন্যাসের নিখুঁত নকশাচিত্র। প্রতিটি প্লটের মুখোমুখি ১০ فٹ অভ্যন্তরীণ চওড়া রাস্তা বিদ্যমান, যা অত্যন্ত সুশৃঙ্খলভাবে সাজানো হয়েছে।',
-      icon: <Map className="w-5 h-5 text-emerald-400" />
-    },
-    {
-      id: 4,
-      image: '/src/assets/images/meherunnesa_hero_1780851448884.png',
-      badge: 'প্রাকৃতিক ও মনোরম পরিবেশ',
-      title: 'শান্ত, সবুজ ও উন্নত নাগরিক পরিবেশ',
-      subTitle: 'ইতোমধ্যেই পরিবার নিয়ে নাগরিক জীবন যাপন',
-      description: 'দক্ষিণ চকমোক্তারের কোলাহলমুক্ত স্বাস্থ্যকর পরিবেশ এবং প্রজেক্ট সংলগ্ন এলাকায় গড়ে ওঠা আবাসিক ঘরবাড়ি। পানি ও বিদ্যুৎ লাইনের তাত্ক্ষণিক সুবিধা সহ আজই বসবাস উপযোগী।',
-      icon: <Sparkles className="w-5 h-5 text-amber-400" />
-    }
-  ];
+  // Sync slides with Firestore real-time
+  useEffect(() => {
+    const q = query(collection(db, 'slideshow'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const dbSlides: Slide[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        dbSlides.push({
+          id: doc.id,
+          image: data.image || '/src/assets/images/meherunnesa_gate_1780852437783.png',
+          badge: data.badge || '',
+          title: data.title || '',
+          subTitle: data.subTitle || '',
+          description: data.description || '',
+          iconName: data.iconName || 'Compass',
+          icon: getIcon(data.iconName || 'Compass')
+        });
+      });
+      if (dbSlides.length > 0) {
+        setSlides(dbSlides);
+      } else {
+        setSlides(STATIC_SLIDES);
+      }
+    }, (err) => {
+      console.warn("Could not load dynamic slideshow from Firestore, utilizing fallback visuals.", err);
+      setSlides(STATIC_SLIDES);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Stop auto play on user interaction
   const clearTimer = () => {
@@ -80,9 +130,9 @@ export default function Slideshow() {
 
   const startTimer = () => {
     clearTimer();
-    if (isPlaying) {
+    if (isPlaying && slides.length > 0) {
       autoPlayTimer.current = setInterval(() => {
-        setCurrentIdx((prevIdx) => (prevIdx + 1) % SLIDES.length);
+        setCurrentIdx((prevIdx) => (prevIdx + 1) % slides.length);
       }, 5000);
     }
   };
@@ -90,16 +140,18 @@ export default function Slideshow() {
   useEffect(() => {
     startTimer();
     return () => clearTimer();
-  }, [isPlaying, currentIdx]);
+  }, [isPlaying, currentIdx, slides]);
 
   const handleNext = () => {
+    if (slides.length === 0) return;
     clearTimer();
-    setCurrentIdx((prevIdx) => (prevIdx + 1) % SLIDES.length);
+    setCurrentIdx((prevIdx) => (prevIdx + 1) % slides.length);
   };
 
   const handlePrev = () => {
+    if (slides.length === 0) return;
     clearTimer();
-    setCurrentIdx((prevIdx) => (prevIdx - 1 + SLIDES.length) % SLIDES.length);
+    setCurrentIdx((prevIdx) => (prevIdx - 1 + slides.length) % slides.length);
   };
 
   const selectSlide = (index: number) => {
@@ -110,6 +162,8 @@ export default function Slideshow() {
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
+
+  if (slides.length === 0) return null;
 
   return (
     <section id="project-gallery" className="py-20 bg-slate-950 text-white relative overflow-hidden border-t border-b border-slate-900">
@@ -151,8 +205,8 @@ export default function Slideshow() {
                   className="w-full h-full relative"
                 >
                   <img
-                    src={SLIDES[currentIdx].image}
-                    alt={SLIDES[currentIdx].title}
+                    src={slides[currentIdx].image}
+                    alt={slides[currentIdx].title}
                     className="w-full h-full object-cover select-none"
                     referrerPolicy="no-referrer"
                   />
@@ -164,8 +218,8 @@ export default function Slideshow() {
               {/* Status Badge */}
               <div className="absolute top-4 left-4 z-20 flex gap-2">
                 <span className="px-3.5 py-1.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-[11px] font-black tracking-wider text-emerald-400 flex items-center gap-1.5 uppercase shadow-sm">
-                  {SLIDES[currentIdx].icon}
-                  <span>{SLIDES[currentIdx].badge}</span>
+                  {slides[currentIdx].icon}
+                  <span>{slides[currentIdx].badge}</span>
                 </span>
               </div>
 
@@ -219,13 +273,13 @@ export default function Slideshow() {
                   {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                 </button>
                 <span className="text-xs text-slate-450 font-bold font-mono">
-                  {currentIdx + 1} / {SLIDES.length}
+                  {currentIdx + 1} / {slides.length}
                 </span>
               </div>
 
               {/* Custom Dots Indicators */}
               <div className="flex gap-2">
-                {SLIDES.map((_, idx) => (
+                {slides.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => selectSlide(idx)}
@@ -261,19 +315,19 @@ export default function Slideshow() {
                     className="space-y-4.5 text-left"
                   >
                     <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block font-sans">
-                      {SLIDES[currentIdx].badge}
+                      {slides[currentIdx].badge}
                     </span>
                     
                     <h3 className="text-xl sm:text-2xl font-black text-white leading-tight font-sans">
-                      {SLIDES[currentIdx].title}
+                      {slides[currentIdx].title}
                     </h3>
                     
                     <p className="text-xs font-bold text-slate-350 tracking-wide">
-                      {SLIDES[currentIdx].subTitle}
+                      {slides[currentIdx].subTitle}
                     </p>
                     
                     <p className="text-slate-400 text-xs sm:text-sm leading-relaxed font-sans font-medium">
-                      {SLIDES[currentIdx].description}
+                      {slides[currentIdx].description}
                     </p>
                   </motion.div>
                 </AnimatePresence>
@@ -327,8 +381,8 @@ export default function Slideshow() {
             <div className="max-w-5xl w-full flex flex-col items-center gap-4 text-center">
               <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full max-h-[75vh] bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
                 <img
-                  src={SLIDES[currentIdx].image}
-                  alt={SLIDES[currentIdx].title}
+                  src={slides[currentIdx].image}
+                  alt={slides[currentIdx].title}
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
@@ -351,13 +405,13 @@ export default function Slideshow() {
               {/* Description captions in Lightbox */}
               <div className="max-w-2xl px-4 mt-2">
                 <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">
-                  {SLIDES[currentIdx].badge}
+                  {slides[currentIdx].badge}
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
-                  {SLIDES[currentIdx].title}
+                  {slides[currentIdx].title}
                 </h3>
                 <p className="text-slate-405 text-xs sm:text-sm mt-2 max-w-xl mx-auto leading-relaxed">
-                  {SLIDES[currentIdx].description}
+                  {slides[currentIdx].description}
                 </p>
               </div>
             </div>

@@ -16,7 +16,7 @@ import {
   CheckCircle,
   ChevronDown
 } from 'lucide-react';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc } from 'firebase/firestore';
 import { db } from './firebase';
 import { Plot } from './types';
 import { seedPlotsIfEmpty } from './data/seedPlots';
@@ -28,6 +28,19 @@ import PlotSelector from './components/PlotSelector';
 import Calculator from './components/Calculator';
 import BookingForm from './components/BookingForm';
 import AdminPanel from './components/AdminPanel';
+
+interface AppConfig {
+  primaryColor?: string;
+  accentColor?: string;
+  installmentPeriod?: string;
+  title?: string;
+  phone?: string;
+  locationAddress?: string;
+  locationUrl?: string;
+  headerSubtitle?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+}
 
 const toBengaliNumber = (num: number | string): string => {
   const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -49,6 +62,44 @@ export default function App() {
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [secretClicks, setSecretClicks] = useState(0);
+  const [config, setConfig] = useState<AppConfig>({
+    primaryColor: '#020617',
+    accentColor: '#10b981',
+    installmentPeriod: '১২ থেকে ২৪ মাস',
+    title: 'মেহেরুন্নেসা সোসাইটি',
+    phone: '01535491716',
+    locationAddress: 'দক্ষিণ চকমোক্তার, এনামুলের মোড়, দুর্গাপুর টু দয়ালের মোড় রোড, নওগাঁ সদর, নওগাঁ।',
+    locationUrl: 'https://maps.app.goo.gl/u3hJZ22mPjjMf8Me6',
+    headerSubtitle: 'প্রজেক্ট ২ | নওগাঁ',
+    heroTitle: '',
+    heroSubtitle: ''
+  });
+
+  // Sync Global Settings
+  useEffect(() => {
+    const configRef = doc(db, 'settings', 'app_config');
+    const unsubscribe = onSnapshot(configRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setConfig({
+          primaryColor: data.primaryColor || '#020617',
+          accentColor: data.accentColor || '#10b981',
+          installmentPeriod: data.installmentPeriod || '১২ থেকে ২৪ মাস',
+          title: data.title || 'মেহেরুন্নেসা সোসাইটি',
+          phone: data.phone || '01535491716',
+          locationAddress: data.locationAddress || 'দক্ষিণ চকমোক্তার, এনামুলের মোড়, দুর্গাপুর টু দয়ালের মোড় রোড, নওগাঁ সদর, নওগাঁ।',
+          locationUrl: data.locationUrl || 'https://maps.app.goo.gl/u3hJZ22mPjjMf8Me6',
+          headerSubtitle: data.headerSubtitle || 'প্রজেক্ট ২ | নওগাঁ',
+          heroTitle: data.heroTitle || '',
+          heroSubtitle: data.heroSubtitle || ''
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Seed plots and sync data real-time from Firestore on mount
   useEffect(() => {
@@ -121,7 +172,7 @@ export default function App() {
     },
     {
       q: "সুদ-মুক্ত কিস্তির নিয়মাবলী কি?",
-      a: "১৫ই মে থেকে ১৫ই জুন, ২০২৬ এর ক্যাম্পেইনে আপনি ন্যূনতম ১০% থেকে সর্বোচ্চ ৩০% ডাউন পেমেন্ট বা এককালীন অ্যাডভান্স দিয়ে স্বপ্নের প্লটের বুকিং নিশ্চিত করতে পারেন। অবশিষ্ট বকেয়া অর্থ আগামী ১২ থেকে সর্বোচ্চ ২৪ মাসের সুদ-মুক্ত সহজ মাসিক কিস্তিতে পরিশোধ করতে পারবেন।"
+      a: `১৫ই মে থেকে ১৫ই জুন, ২০২৬ এর ক্যাম্পেইনে আপনি ন্যূনতম ১০% থেকে সর্বোচ্চ ৩০% ডাউন পেমেন্ট বা এককালীন অ্যাডভান্স দিয়ে স্বপ্নের প্লটের বুকিং নিশ্চিত করতে পারেন। অবশিষ্ট বকেয়া অর্থ আগামী ${config.installmentPeriod} সহজ মাসিক কিস্তিতে পরিশোধ করতে পারবেন।`
     },
     {
       q: "প্রজেক্টের রাস্তার প্রশস্ততা কেমন?",
@@ -136,6 +187,40 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-emerald-400 selection:text-slate-900 antialiased overflow-x-hidden">
       
+      <style>{`
+        :root {
+          --brand-primary: ${config.primaryColor};
+          --brand-accent: ${config.accentColor};
+        }
+        .bg-slate-950, .bg-slate-900 {
+          background-color: ${config.primaryColor} !important;
+        }
+        .bg-emerald-500, .bg-emerald-400, .bg-emerald-600 {
+          background-color: ${config.accentColor} !important;
+        }
+        .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-emerald-450 {
+          color: ${config.accentColor} !important;
+        }
+        .border-emerald-500, .border-emerald-400 {
+          border-color: ${config.accentColor} !important;
+        }
+        .border-emerald-500\/20, .border-emerald-500\/25, .border-emerald-500\/10 {
+          border-color: ${config.accentColor}33 !important;
+        }
+        .shadow-emerald-400\/15 {
+          box-shadow: 0 10px 15px -3px ${config.accentColor}25 !important;
+        }
+        .bg-emerald-500\/10 {
+          background-color: ${config.accentColor}11 !important;
+        }
+        .bg-emerald-500\/25, .bg-emerald-500\/20 {
+          background-color: ${config.accentColor}22 !important;
+        }
+        .selection\\:bg-emerald-400::selection {
+          background-color: ${config.accentColor} !important;
+        }
+      `}</style>
+
       {/* 1. Header Navigation */}
       <header className="sticky top-0 z-40 bg-slate-950 text-white border-b border-slate-800 shadow-md backdrop-blur-md bg-opacity-95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -146,8 +231,8 @@ export default function App() {
                 <Compass className="w-5 h-5 text-slate-950 animate-spin-slow" />
               </div>
               <div className="text-left">
-                <span className="font-sans font-black text-lg tracking-tight hover:text-emerald-400 transition-all cursor-pointer">মেহেরুন্নেসা সোসাইটি</span>
-                <p className="text-[10px] text-emerald-400 tracking-wider font-extrabold uppercase leading-none">প্রজেক্ট ২ | নওগাঁ</p>
+                <span className="font-sans font-black text-lg tracking-tight hover:text-emerald-400 transition-all cursor-pointer">{config.title}</span>
+                <p className="text-[10px] text-emerald-400 tracking-wider font-extrabold uppercase leading-none">{config.headerSubtitle}</p>
               </div>
             </div>
 
@@ -165,11 +250,11 @@ export default function App() {
             {/* Header direct call */}
             <div className="hidden lg:flex items-center gap-3">
               <a
-                href="tel:01535491716"
+                href={`tel:${config.phone}`}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black rounded-lg shadow-sm transition-all"
               >
                 <Phone className="w-4 h-4" />
-                <span>০১৫৩৫৪৯১৭১৬</span>
+                <span>০{toBengaliNumber(config.phone || '১৭১৬')}</span>
               </a>
             </div>
 
@@ -201,11 +286,11 @@ export default function App() {
               <a href="#location-section" onClick={() => setIsMobileMenuOpen(false)} className="block hover:text-emerald-400">লোকেশন</a>
               <div className="pt-2">
                 <a
-                  href="tel:01535491716"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 text-slate-950 rounded-xl"
+                  href={`tel:${config.phone}`}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-500 text-slate-950 rounded-xl text-center"
                 >
-                  <Phone className="w-4 h-4" />
-                  <span>কল করুন: ০১৫৩৫৪৯১৭১৬</span>
+                  <Phone className="w-4 h-4 inline mr-2" />
+                  <span>০{toBengaliNumber(config.phone || '১৭১৬')}</span>
                 </a>
               </div>
             </motion.div>
@@ -370,6 +455,7 @@ export default function App() {
       />
 
       {/* 8. Interactive Location Section */}
+            {/* 8. Interactive Location Section */}
       <section id="location-section" className="py-16 bg-slate-900 text-white relative overflow-hidden">
         <div className="absolute top-1/2 left-0 w-80 h-80 bg-emerald-500/10 rounded-full filter blur-2xl pointer-events-none" />
 
@@ -377,83 +463,98 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Map Info Card Left */}
-            <div className="lg:col-span-5 text-left space-y-5">
+            <div className="lg:col-span-12 xl:col-span-5 text-left space-y-5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider">
                 <MapPin className="w-3.5 h-3.5" />
                 <span>সরাসরি প্রজেক্ট লোকেশন</span>
               </div>
+              
+              <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-sans">
+                সহজ যোগাযোগ ও যাতায়াত ব্যবস্থা
+              </h3>
+              
+              <p className="text-slate-300 text-sm leading-relaxed font-sans">
+                নওগাঁর দক্ষিণ চকমোক্তার সংলগ্ন এনামুলের মোড় হতে দুর্গাপুর টু দয়ালের মোড় রোডে প্রবেশ করলেই আমাদের প্রজেক্ট ২ দেখতে পাবেন। শহরের যেকোনো স্থান থেকে মাত্র কয়েক মিনিটেই পৌঁছানো সম্ভব।
+              </p>
 
-              <h2 className="text-3xl font-extrabold tracking-tight text-white font-sans leading-tight">
-                দক্ষিণ চকমোক্তার, এনামুলের মোড়, নওগাঁ
-              </h2>
+              <div className="space-y-4 pt-2 text-xs sm:text-sm font-medium">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                    <MapPin className="w-5 h-5 flex-shrink-0" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-slate-100 font-sans">প্রজেক্টের ঠিকানা</h5>
+                    <p className="text-slate-400 mt-1 font-sans">{config.locationAddress}</p>
+                  </div>
+                </div>
 
-              <div className="space-y-4 text-sm text-slate-350 leading-relaxed font-sans">
-                <p>
-                  <strong>ঠিকানা:</strong> দক্ষিণ চকমোক্তার, এনামুলের মোড়, দুর্গাপুর টু দয়ালের মোড় রোড, নওগাঁ সদর, নওগাঁ।
-                </p>
-                <p>
-                  আপনি চাইলে যেকোনো দিন সরাসরি নওগাঁ সদর বা দুর্গাপুর সংলগ্ন স্থান থেকে আমাদের প্রজেক্টটি ভিজিট করতে পারেন। আমাদের প্রতিনিধি সরাসরি সাইটে উপস্থিত থেকে আপনাকে সম্পূর্ণ নকশা এবং বাউন্ডারি প্রদর্শন করবেন।
-                </p>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+                    <Phone className="w-5 h-5 flex-shrink-0" />
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-slate-100 font-sans">সরাসরি বুকিং ও পরিদর্শনের জন্য ফোন করুন</h5>
+                    <p className="text-emerald-400 font-extrabold mt-1 font-sans">০{toBengaliNumber(config.phone || '১৭১৬')}</p>
+                  </div>
+                </div>
               </div>
 
-              {/* Call to maps action link */}
-              <div className="pt-2">
-                <a
-                  href="https://maps.app.goo.gl/u3hJZ22mPjjMf8Me6"
+              <div className="pt-4">
+                <a 
+                  href={config.locationUrl}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black rounded-xl text-sm shadow-lg shadow-emerald-400/15"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-slate-950 font-black rounded-xl hover:bg-emerald-400 transition-all text-xs font-sans"
                 >
-                  <ExternalLink className="w-4 h-4" />
-                  <span>Google Maps-এ অবস্থান দেখুন</span>
+                  <Compass className="w-4 h-4" />
+                  <span>Google Maps এ ম্যাপ ওপেন করুন</span>
                 </a>
               </div>
             </div>
 
-            {/* Simulated Live maps component Right */}
-            <div className="lg:col-span-7">
-              <div className="relative rounded-3xl overflow-hidden border border-slate-700 bg-slate-950 shadow-2xl h-[330px] sm:h-[400px]">
-                {/* Visual placeholder matching Naogaon coordinates */}
-                <iframe
-                  title="Meherunnesa Project Map Location Frame"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3618.318854497528!2d88.94824317616147!3d24.81881694605992!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fc93b664d6ebd5%3A0xc3fec89cbcedbe57!2z4Kau4KeH4Ka54Kaw4KeB4Kao4KeN4Kao4KeH4Ka44Ka-IOCmuOCni-CmuOCmvuCmh_Cmn-CmvCDgpqugp4RigI3gpqXgp4AgMg!5e0!3m2!1sbn!2sbd!4v1717774000000!5m2!1sbn!2sbd"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="filter grayscale-[10%] brightness-[90%] contrast-[105%]"
-                />
-              </div>
+            {/* Map iframe Right */}
+            <div className="lg:col-span-12 xl:col-span-7 h-96 w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1810.7423853127815!2d88.9419137!3d24.8124971!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fc9336df7a0d49%3A0xe67db0ca27fe8ea9!2z4Kau4KeH4Ka54Kaw4KeB4Kao4KeN4Kao4KeH4Ka44Ka-IOCmuOCni-CmuOCmvuCmh_Cmn-Cmv-Cmrg!5e0!3m2!1sbn!2sbd!4v1700000000000"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                title="Meherunnesa Society Google Map Location"
+              />
             </div>
 
           </div>
         </div>
       </section>
 
-      {/* 9. FAQ Accordion section */}
-      <section className="py-20 bg-white border-b border-slate-205 text-left">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <HelpCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2.5" />
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
-              সাধারণ জিজ্ঞাসা ও প্রশ্নাবলী (FAQs)
-            </h2>
+      {/* 9. FAQs Accordion Section */}
+      <section className="py-16 bg-white border-t border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          
+          <div className="max-w-2xl mx-auto mb-12">
+            <h3 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight font-sans">
+              আবাসন সংক্রান্ত সাধারণ প্রশ্নাবলী
+            </h3>
+            <p className="text-emerald-600 font-extrabold text-xs sm:text-sm mt-3 uppercase tracking-wider font-sans">
+              প্লট বুকিং ও প্রজেক্ট নিয়ে বিস্তারিত জানতে প্রশ্নোত্তরগুলো পড়ুন
+            </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-3xl mx-auto">
             {FAQS.map((faq, idx) => (
               <div 
-                key={idx} 
-                className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs hover:border-slate-300 transition-all bg-slate-50/50"
+                key={idx}
+                className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-50/50"
               >
                 <button
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
                   className="w-full flex items-center justify-between p-5 text-left text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"
                 >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${activeFaq === idx ? 'rotate-180 text-emerald-500' : ''}`} />
+                  <span className="text-left leading-relaxed font-sans">{faq.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ml-4 ${activeFaq === idx ? 'rotate-180 text-emerald-500' : ''}`} />
                 </button>
                 
                 <AnimatePresence>
@@ -462,7 +563,7 @@ export default function App() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-slate-200 bg-white p-5 text-xs sm:text-sm text-slate-600 leading-relaxed font-sans"
+                      className="border-t border-slate-200 bg-white p-5 text-xs sm:text-sm text-slate-600 leading-relaxed font-sans text-left"
                     >
                       {faq.a}
                     </motion.div>
@@ -476,63 +577,67 @@ export default function App() {
       </section>
 
       {/* 10. Admin Configuration Board Segment */}
-      <AdminPanel 
-        plots={plots} 
-        onRefreshPlots={() => {
-          // Dummy toggler to refresh since snapshots handles realtime updates anyway
-          console.log("Realtime plots re-synergized from Firestore console updates.");
-        }} 
-      />
+      {isAdminMode && (
+        <AdminPanel 
+          plots={plots} 
+          isAdminMode={isAdminMode}
+          setIsAdminMode={setIsAdminMode}
+          onRefreshPlots={() => {
+            console.log("Realtime plots re-synergized from Firestore.");
+          }} 
+        />
+      )}
 
-      {/* 11. Custom Contact Directory Footer footer */}
+      {/* 11. Custom Contact Footer Segment */}
       <footer className="bg-slate-950 text-white py-16 text-left relative overflow-hidden border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 md:grid-cols-4 gap-10">
           
           {/* Logo description */}
           <div className="md:col-span-2 space-y-4">
-            <h4 className="text-xl font-black text-white hover:text-emerald-400 transition-colors">মেহেরুন্নেসা সোসাইটি - প্রজেক্ট ২</h4>
-            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm font-sans">
+            <h4 className="text-xl font-black text-white hover:text-emerald-400 transition-colors font-sans">{config.title}</h4>
+            <p className="text-[10px] text-emerald-400 uppercase tracking-widest font-black leading-none font-sans">{config.headerSubtitle}</p>
+            <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-sm font-sans pt-2">
               নওগাঁর দুর্গাপুর এনামুলের মোড় সংলগ্ন দক্ষিণ চকমোক্তার এলাকায় দীর্ঘস্থায়ী আবাসনের জন্য সম্পূর্ণ ভরাট নিষ্কণ্টক লাল কাদা মাটির প্লট বিক্রয়কারী স্বনামধন্য প্রতিষ্ঠান।
             </p>
             
             <div className="pt-3 flex gap-3 text-xs">
               <a 
-                href="https://wa.me/8801535491716" 
+                href={`https://wa.me/88${config.phone || '01535491716'}`} 
                 target="_blank" 
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all font-sans"
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>WhatsApp মেসেজ</span>
               </a>
               <a 
-                href="tel:01535491716" 
+                href={`tel:${config.phone}`} 
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800/80 text-slate-100 font-bold border border-slate-700 rounded-lg hover:bg-slate-800 transition-all font-mono"
               >
-                <Phone className="w-4 h-4 text-emerald-450" />
-                <span>01535491716</span>
+                <Phone className="w-4 h-4 text-emerald-440" />
+                <span>০{toBengaliNumber(config.phone || '১৭১৬')}</span>
               </a>
             </div>
           </div>
 
           {/* Quick links list */}
-          <div className="space-y-4 text-xs font-semibold">
+          <div className="space-y-4 text-xs font-semibold font-sans">
             <h5 className="text-slate-200 text-xs uppercase tracking-widest font-black">নেভিগেশন</h5>
             <ul className="space-y-2.5">
-              <li><a href="#home" className="text-slate-400 hover:text-white transition-colors">হোম পেজ</a></li>
-              <li><a href="#about-section" className="text-slate-400 hover:text-white transition-colors">প্রজেক্ট ফিচারসমূহ</a></li>
-              <li><a href="#map-layout" className="text-slate-400 hover:text-white transition-colors">নকশা ও প্লট ম্যাপ</a></li>
-              <li><a href="#calculator-section" className="text-slate-400 hover:text-white transition-colors">কিস্তি ক্যালকুলেটর</a></li>
-              <li><a href="#booking-section" className="text-slate-400 hover:text-white transition-colors">অনলাইন প্লট বুকিং</a></li>
+              <li><a href="#home" className="text-slate-400 hover:text-white transition-colors font-sans">হোম পেজ</a></li>
+              <li><a href="#about-section" className="text-slate-400 hover:text-white transition-colors font-sans">প্রজেক্ট ফিচারসমূহ</a></li>
+              <li><a href="#map-layout" className="text-slate-400 hover:text-white transition-colors font-sans">নকশা ও প্লট ম্যাপ</a></li>
+              <li><a href="#calculator-section" className="text-slate-400 hover:text-white transition-colors font-sans">কিস্তি ক্যালকুলেটর</a></li>
+              <li><a href="#booking-section" className="text-slate-400 hover:text-white transition-colors font-sans font-sans">অনলাইন প্লট বুকিং</a></li>
             </ul>
           </div>
 
           {/* Site address details right */}
-          <div className="space-y-4 text-xs">
-            <h5 className="text-slate-200 text-xs uppercase tracking-widest font-black">যাতায়াত ও যোগাযোগ</h5>
+          <div className="space-y-4 text-xs font-sans">
+            <h5 className="text-slate-200 text-xs uppercase tracking-widest font-black font-sans">যাতায়াত ও যোগাযোগ</h5>
             <div className="space-y-3 text-slate-400 font-sans">
-              <p>কাজী আশরাফ আলী</p>
-              <p className="leading-relaxed">দক্ষিণ চকমোক্তার, এনামুলের মোড়, দুর্গাপুর টু দয়ালের মোড় রোড, নওগাঁ সদর, নওগাঁ।</p>
+              <p className="font-sans font-black">কাজী আশরাফ আলী</p>
+              <p className="leading-relaxed font-sans">{config.locationAddress}</p>
               <p className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-2 rounded text-[10px] text-teal-400 font-mono w-max">
                 <Clock className="w-3.5 h-3.5" />
                 <span>যোগাযোগের সময়: সকাল ৯টা - রাত্রি ৯টা</span>
@@ -544,8 +649,29 @@ export default function App() {
 
         {/* Legal copyrights line */}
         <div className="border-t border-slate-900 mt-12 pt-6 text-center text-[10px] text-slate-500 font-sans">
-          <p>© {new Date().getFullYear()} মেহেরুন্নেসা সোসাইটি প্রজেক্ট ২। সর্বস্বত্ব সংরক্ষিত।</p>
-          <p className="mt-1 font-bold text-slate-600">পেশাদার ডাইনামিক ডেটাবেজ ম্যানেজমেন্ট অ্যাপ প্রজেক্ট।</p>
+          <p>
+            © {new Date().getFullYear()} {config.title} 
+            <span 
+              id="admin-stealth-trigger" 
+              className="cursor-pointer hover:text-emerald-400 select-none transition-all px-0.5"
+              title="সংস্করণ ১.৪"
+              onClick={() => {
+                setSecretClicks(prev => {
+                  const val = prev + 1;
+                  console.log(`Stealth activation click registered: ${val}/5`);
+                  if (val >= 5) {
+                    setIsAdminMode(true);
+                    return 0; // reset click counter
+                  }
+                  return val;
+                });
+              }}
+            >
+              ।
+            </span> 
+            সর্বস্বত্ব সংরক্ষিত।
+          </p>
+          <p className="mt-1 font-bold text-slate-600 font-sans">পেশাদার ডাইনামিক ডেটাবেজ ম্যানেজমেন্ট অ্যাপ প্রজেক্ট।</p>
         </div>
       </footer>
 

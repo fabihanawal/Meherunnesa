@@ -7,6 +7,8 @@ interface HeroProps {
   soldPlots: number;
   onScrollToPlots: () => void;
   onScrollToCalculator: () => void;
+  customTitle?: string;
+  customSubtitle?: string;
 }
 
 export default function Hero({
@@ -14,7 +16,9 @@ export default function Hero({
   availablePlots,
   soldPlots,
   onScrollToPlots,
-  onScrollToCalculator
+  onScrollToCalculator,
+  customTitle,
+  customSubtitle
 }: HeroProps) {
   return (
     <div id="home" className="relative bg-slate-900 border-b border-slate-800 text-white overflow-hidden">
@@ -40,21 +44,25 @@ export default function Hero({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight font-sans"
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight font-sans whitespace-pre-line"
             >
-              মেহেরুন্নেসা সোসাইটি <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
-                প্রজেক্ট ২ - স্বপ্নের প্লট কিনুন
-              </span>
+              {customTitle || (
+                <>
+                  মেহেরুন্নেসা সোসাইটি <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                    প্রজেক্ট ২ - স্বপ্নের প্লট কিনুন
+                  </span>
+                </>
+              )}
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg text-slate-350 max-w-2xl leading-relaxed font-sans"
+              className="text-lg text-slate-350 max-w-2xl leading-relaxed font-sans whitespace-pre-line"
             >
-              আজই বেছে নিন আপনার ভবিষ্যৎ আবাসন কিংবা বাণিজ্যিক ঠিকানা। নওগাঁর দক্ষিণ চকমোক্তার (এনামুলের মোড়) সংলগ্ন মনোরম পরিবেশে ২০ ফুট প্রশস্ত পিচঢালা মেইন রোড ঘেঁষে গড়ে উঠছে এক স্বপ্নীল আবাসন প্রকল্প। সুদ-মুক্ত সহজ কিস্তি সুবিধা নিয়ে এখনই ঘর বানানোর উপযোগী নিষ্কণ্টক জমি।
+              {customSubtitle || "আজই বেছে নিন আপনার ভবিষ্যৎ আবাসন কিংবা বাণিজ্যিক ঠিকানা। নওগাঁর দক্ষিণ চকমোক্তার (এনামুলের মোড়) সংলগ্ন মনোরম পরিবেশে ২০ ফুট প্রশস্ত পিচঢালা মেইন রোড ঘেঁষে গড়ে উঠছে এক স্বপ্নীল আবাসন প্রকল্প। সুদ-মুক্ত সহজ কিস্তি সুবিধা নিয়ে এখনই ঘর বানানোর উপযোগী নিষ্কণ্টক জমি।"}
             </motion.p>
 
             {/* Quick Benefits Tagline */}

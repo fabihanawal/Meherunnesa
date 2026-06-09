@@ -64,6 +64,30 @@ export default function BookingForm({ plots, selectedPlot }: BookingFormProps) {
       // Create document in Firestore
       await addDoc(bookingsCol, payload);
 
+      // Generate WhatsApp message and redirect to WhatsApp number 01535491716
+      const formattedWhatsAppPhone = "8801535491716";
+      const waText = `আসসালামু আলাইকুম,
+
+আমি মেহেরুন্নেসা সোসাইটি প্রজেক্ট ২ এ প্লট বুকিং / তথ্য অনুসন্ধানের জন্য যোগাযোগ করছি। বিস্তারিত নিম্নরূপঃ
+
+👤 নাম: ${customerName.trim()}
+📞 মোবাইল নম্বর: ${customerPhone.trim()}
+📧 ইমেইল: ${customerEmail.trim() || 'প্রদান করা হয়নি'}
+🗺️ আগ্রহী প্লট: ${plotId ? `প্লট ${plotId}` : 'সাধারণ তথ্য / আলোচনা'}
+💬 বিশেষ জিজ্ঞাসা/বার্তা: ${message.trim() || 'নেই'}
+
+ধন্যবাদ!`;
+
+      const whatsappUrl = `https://wa.me/${formattedWhatsAppPhone}?text=${encodeURIComponent(waText)}`;
+      
+      // Attempt to open in a new window/tab
+      try {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        console.error("Window open blocked. Falling back to setting window.location.href", err);
+        window.location.href = whatsappUrl;
+      }
+
       setSuccess(true);
       // Reset form variables
       setCustomerName('');
